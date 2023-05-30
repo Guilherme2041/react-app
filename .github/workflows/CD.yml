@@ -65,8 +65,8 @@ jobs:
         run: |
           ssh azure 'sudo systemctl stop react-app'
           ssh azure 'sudo rm -rf /app/react-app'
-          scp -r build azure:/home/github/react-app
-          ssh azure 'sudo mv /home/github/react-app /app/react-app'
+          scp -r build azure:~/react-app
+          ssh azure 'sudo mv ~/react-app /app/react-app'
           ssh azure 'sudo systemctl start react-app'
         
   CD-Release:
@@ -122,7 +122,7 @@ jobs:
         run: |
           ssh azure 'sudo systemctl stop react-app-release'
           ssh azure 'sudo rm -rf /app/react-app-release'
-          scp -r build azure:/home/github/react-app
-          ssh azure 'sudo mv /home/github/react-app /app/react-app-release'
+          scp -r build azure:~/react-app
+          ssh azure 'sudo mv ~/react-app /app/react-app-release'
           ssh azure 'sudo systemctl start react-app-release'
           
