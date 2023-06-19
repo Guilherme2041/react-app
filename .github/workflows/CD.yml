@@ -96,9 +96,9 @@ jobs:
           
       - name: Etapa de Deploy
         run: |
-          ssh azure 'sudo docker stop $CONTAINER'
-          ssh azure 'sudo docker rm $CONTAINER'
-          ssh azure 'sudo docker run -d -p 3000:3000 --name $CONTAINER -t $CONTAINER-PROJECT:latest'
+          ssh azure "sudo docker stop $CONTAINER"
+          ssh azure "sudo docker rm $CONTAINER"
+          ssh azure "sudo docker run -d -p 3000:3000 --name $CONTAINER -t $CONTAINER-PROJECT:latest"
         env:
           CONTAINER: react-app
           CONTAINER-PROJECT: ${{ secrets.DOCKERHUB_USERNAME }}/react-container
