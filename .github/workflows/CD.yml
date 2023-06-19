@@ -3,22 +3,69 @@ name: CD
 
 # Aciona o fluxo quando:
 on:
-  # Houver um push nas branches main e release
+  # Houver um push na branch main
   push:
-    branches: [ "main", "release" ]
+    branches: [ "main" ]
   # Permite a execução manual
   workflow_dispatch:
 
 # Fluxo de trabalho
 jobs:
-
-  CD-Production:
+ Tests:
     runs-on: ubuntu-latest
-    # Execução condicional na branch main
-    if: github.ref == 'refs/heads/main'
+    
     # Passos do fluxo de trabalho
     steps:
-    
+      - name: Checkout do repositório
+        uses: actions/checkout@v3
+        
+      - name: Preparando Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+      
+      - name: Instalando dependências
+        run: npm install
+
+      - name: Executando testes
+        run: npm run test -- --coverage
+          
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          
+ Build_and_push:
+    runs-on: ubuntu-latest
+    needs: Tests
+    # Passos do fluxo de trabalho
+    steps:
+      - name: Npm build
+        run: npm run build
+        
+      - name: Login no Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          
+      - name: Preparação do Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        
+      - name: Etapa de build e push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/react-app:latest
+          
+ Deploy:
+    runs-on: ubuntu-latest
+    needs: Build_and_push
+    # Passos do fluxo de trabalho
+    steps:
       - name: Configuração SSH Azure
         run: |
           mkdir -p ~/.ssh/
@@ -35,94 +82,12 @@ jobs:
           SSH_USER: ${{ secrets.AZURE_SSH_USER }}
           SSH_KEY: ${{ secrets.AZURE_SSH_KEY }}
           SSH_HOST: ${{ secrets.AZURE_SSH_HOST }}
-
-      - name: Checkout do repositório
-        uses: actions/checkout@v3
-        
-      - name: Preparando Node.js 16.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16.x
-      
-      - name: Instalando dependências
-        run: npm install
-
-      - name: Executando testes
-        run: npm run test -- --coverage
-        env:
-          CI: true
-          
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-         
-      - name: Etapa de build
-        run: npm run build
           
       - name: Etapa de Deploy
         run: |
-          ssh azure 'sudo systemctl stop react-app'
-          ssh azure 'sudo rm -rf /app/react-app'
-          scp -r build azure:~/react-app
-          ssh azure 'sudo mv ~/react-app /app/react-app'
-          ssh azure 'sudo systemctl start react-app'
-        
-  CD-Release:
-    runs-on: ubuntu-latest
-    # Execução condicional na branch release
-    if: github.ref == 'refs/heads/release'
-    # Passos do fluxo de trabalho
-    steps:
-    
-      - name: Configuração SSH Azure
-        run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/azure.key
-          chmod 600 ~/.ssh/azure.key
-          cat >>~/.ssh/config <<END
-          Host azure
-            HostName $SSH_HOST
-            User $SSH_USER
-            IdentityFile ~/.ssh/azure.key
-            StrictHostKeyChecking no
-          END
+          ssh azure 'sudo docker stop $CONTAINER'
+          ssh azure 'sudo docker rm $CONTAINER'
+          ssh azure 'sudo docker run -d -p 3000:3000 --name $CONTAINER -t $CONTAINER-PROJECT:latest'
         env:
-          SSH_USER: ${{ secrets.AZURE_SSH_USER }}
-          SSH_KEY: ${{ secrets.AZURE_SSH_KEY }}
-          SSH_HOST: ${{ secrets.AZURE_SSH_HOST }}
-
-      - name: Checkout do repositório
-        uses: actions/checkout@v3
-        
-      - name: Preparando Node.js 16.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16.x
-      
-      - name: Instalando dependências
-        run: npm install
-
-      - name: Executando testes
-        run: npm run test -- --coverage
-        env:
-          CI: true
-          
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-         
-      - name: Etapa de build
-        run: npm run build
-          
-      - name: Etapa de Deploy
-        run: |
-          ssh azure 'sudo systemctl stop react-app-release'
-          ssh azure 'sudo rm -rf /app/react-app-release'
-          scp -r build azure:~/react-app
-          ssh azure 'sudo mv ~/react-app /app/react-app-release'
-          ssh azure 'sudo systemctl start react-app-release'
-          
+          CONTAINER: react-app
+          CONTAINER-PROJECT: guilherme2041/react-container
