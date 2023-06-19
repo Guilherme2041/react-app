@@ -48,12 +48,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16.x
-      
-      - name: Instalando dependências
-        run: npm install
-        
-      - name: Npm build
-        run: npm run build
         
       - name: Login no Docker Hub
         uses: docker/login-action@v2
