@@ -41,6 +41,17 @@ jobs:
     needs: Tests
     # Passos do fluxo de trabalho
     steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v3
+        
+      - name: Preparando Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+      
+      - name: Instalando dependências
+        run: npm install
+        
       - name: Npm build
         run: npm run build
         
@@ -59,7 +70,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/react-app:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/react-container:latest
           
  Deploy:
     runs-on: ubuntu-latest
@@ -90,4 +101,4 @@ jobs:
           ssh azure 'sudo docker run -d -p 3000:3000 --name $CONTAINER -t $CONTAINER-PROJECT:latest'
         env:
           CONTAINER: react-app
-          CONTAINER-PROJECT: guilherme2041/react-container
+          CONTAINER-PROJECT: ${{ secrets.DOCKERHUB_USERNAME }}/react-container
