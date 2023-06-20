@@ -66,9 +66,10 @@ jobs:
           
       - name: Etapa de Deploy
         run: |
-          ssh azure "sudo docker stop $CONTAINER"
-          ssh azure "sudo docker rm $CONTAINER"
-          ssh azure "sudo docker run -d -p 3000:3000 --name $CONTAINER $CONTAINER-PROJECT:latest"
+          ssh azure "touch docker-compose.yml && rm -r docker-compose.yml"
+          scp docker-compose.yml azure:~/docker-compose.yml
+          ssh azure "sudo docker compose stop"
+          ssh azure "sudo docker compose up -d"
         env:
           CONTAINER: react-app
           CONTAINER-PROJECT: ${{ secrets.DOCKERHUB_USERNAME }}/react-container
