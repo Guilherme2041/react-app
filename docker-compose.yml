@@ -1,0 +1,5 @@
+services:
+   react-app:
+     image: "guilherme2041/react-container:latest"
+     ports:
+      - "3000:3000"
