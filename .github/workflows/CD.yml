@@ -40,7 +40,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/react-container:latest
+          tags: guilherme2041/react-container:latest
           
  Deploy:
     runs-on: ubuntu-latest
