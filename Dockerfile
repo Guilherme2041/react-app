@@ -5,7 +5,7 @@ LABEL maintainer="João Guilherme"
 RUN mkdir -p /opt/app
 WORKDIR /opt/app
 # Copia o package.json do repositório
-COPY ./package.json .
+COPY ./package.json ./package-lock.json .
 # Realiza o download das depedencias
 RUN npm install
 # Copia o conteudo do repositorio
