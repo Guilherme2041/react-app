@@ -11,10 +11,34 @@ on:
 
 # Fluxo de trabalho
 jobs:
+ Tests:
+    runs-on: ubuntu-latest
+    
+    # Passos do fluxo de trabalho
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v3
+        
+      - name: Preparando Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+      
+      - name: Instalando dependências
+        run: npm install
 
+      - name: Executando testes
+        run: npm run test -- --coverage
+          
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          
  Build_and_push:
     runs-on: ubuntu-latest
-    #needs: Tests
+    needs: Tests
     # Passos do fluxo de trabalho
     steps:
       - name: Checkout do repositório
