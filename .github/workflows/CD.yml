@@ -47,6 +47,9 @@ jobs:
     needs: Build_and_push
     # Passos do fluxo de trabalho
     steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v3
+        
       - name: Configuração SSH Azure
         run: |
           mkdir -p ~/.ssh/
