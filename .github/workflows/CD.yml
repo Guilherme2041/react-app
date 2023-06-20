@@ -95,6 +95,7 @@ jobs:
         run: |
           ssh azure "touch docker-compose.yml && rm -r docker-compose.yml"
           scp docker-compose.yml azure:~/docker-compose.yml
+          ssh azure "sudo docker compose pull"
           ssh azure "sudo docker compose stop"
           ssh azure "sudo docker compose up -d"
         env:
